@@ -179,7 +179,10 @@ Token Lexer::readOperator() {
             
         case '.':
             return {TokenType::DOT, ".", startLine};
-            
+        
+        case '`':
+            return {TokenType::BACKTICK, "`", startLine};
+
         default:
             break;
     }

@@ -91,14 +91,14 @@ TEST_F(LexerTest, Identifiers) {
 }
 
 TEST_F(LexerTest, MixedIdentifiersAndKeywords) {
-    auto tokens = tokenize("SELECT my_table FROM database");
+    auto tokens = tokenize("SELECT my_table FROM my_database");
     
     ASSERT_EQ(tokens.size(), 5); // 4 токена + END
     
     expectToken(tokens[0], TokenType::KW_SELECT, "SELECT", 1);
     expectToken(tokens[1], TokenType::IDENTIFIER, "my_table", 1);
     expectToken(tokens[2], TokenType::KW_FROM, "FROM", 1);
-    expectToken(tokens[3], TokenType::IDENTIFIER, "database", 1);
+    expectToken(tokens[3], TokenType::IDENTIFIER, "my_database", 1);
 }
 
 // ── Тесты литералов ──────────────────────────────────────────────────────────
@@ -212,7 +212,7 @@ TEST_F(LexerTest, LineNumbers) {
 // ── Тесты сложных выражений ──────────────────────────────────────────────────
 
 TEST_F(LexerTest, ComplexQuery) {
-    auto tokens = tokenize("SELECT name, age FROM users WHERE age >= 18 AND status = 'active'");
+    auto tokens = tokenize("SELECT name, age FROM users WHERE age >= 18 AND status == 'active'");
     
     ASSERT_GT(tokens.size(), 10);
     
@@ -294,7 +294,7 @@ TEST_F(LexerTest, VeryLongIdentifier) {
 TEST_F(LexerTest, ConsecutiveOperators) {
     auto tokens = tokenize("=== !==");
     
-    ASSERT_EQ(tokens.size(), 4); // ==, =, !=, = + END
+    ASSERT_EQ(tokens.size(), 5); // ==, =, !=, =, END
     
     expectToken(tokens[0], TokenType::OP_EQ, "==", 1);
     expectToken(tokens[1], TokenType::OP_ASSIGN, "=", 1);

@@ -205,9 +205,17 @@ Condition Parser::parsePrimaryCondition() {
 }
 
 Condition Parser::combineConditions(Condition& left, Condition& right, Condition::LogicalOp op) {
-    left.logicalOp = op;
-    left.next = std::make_unique<Condition>(std::move(right));
-    return std::move(left);
+    Condition combined;
+    combined.left = left.left;
+    combined.leftIsColumn = left.leftIsColumn;
+    combined.op = left.op;
+    combined.right = left.right;
+    combined.rightIsColumn = left.rightIsColumn;
+    combined.right2 = left.right2;
+    combined.right2IsColumn = left.right2IsColumn;
+    combined.logicalOp = op;
+    combined.next = std::make_unique<Condition>(std::move(right));
+    return combined;
 }
 
 
@@ -224,59 +232,6 @@ Command Parser::parseCreate() {
     if (match(TokenType::KW_TABLE)) {
         CreateTableCmd cmd;
         
-        // Имя таблицы (возможно с базой данных)
-        parseTableRef(cmd.dbName, cmd.tableName);
-        
-        expect(TokenType::LPAREN, "'('");
-        
-        // Список колонок
-        do {
-            ColumnDef col;
-            Token colName = expect(TokenType::IDENTIFIER, "column name");
-            col.name = colName.value;
-            
-            // Тип колонки
-            Token typeToken = expect(TokenType::IDENTIFIER, "column type");
-            std::string typeStr = typeToken.value;
-            std::transform(typeStr.begin(), typeStr.end(), typeStr.begin(), ::toupper);
-            
-            if (typeStr == "INT" || typeStr == "INTEGER") {
-                col.type = ColumnDef::Type::INT;
-            } else if (typeStr == "STR" || typeStr == "STRING" || typeStr == "TEXT") {
-                col.type = ColumnDef::Type::STRING;
-            } else {
-                throw ParseError("Unknown column type: " + typeStr + 
-                               " at line " + std::to_string(typeToken.line));
-            }
-            
-            // Модификаторы
-            col.modifier = ColumnDef::Modifier::NONE;
-            
-            if (match(TokenType::KW_NOT_NULL)) {
-                col.modifier = ColumnDef::Modifier::NOT_NULL;
-            } else if (match(TokenType::KW_INDEXED)) {
-                col.modifier = ColumnDef::Modifier::INDEXED;
-            }
-            
-            // Проверяем комбинацию NOT NULL INDEXED
-            if (col.modifier == ColumnDef::Modifier::NOT_NULL && 
-                match(TokenType::KW_INDEXED)) {
-                col.modifier = ColumnDef::Modifier::INDEXED;
-            } else if (col.modifier == ColumnDef::Modifier::INDEXED && 
-                      match(TokenType::KW_NOT_NULL)) {
-            }
-            
-            cmd.columns.push_back(col);
-            
-        } while (match(TokenType::COMMA));
-        
-        expect(TokenType::RPAREN, "')'");
-        
-        return cmd;
-    }
-    
-    if (match(TokenType::KW_TABLE)) {
-        CreateTableCmd cmd;
         parseTableRef(cmd.dbName, cmd.tableName);
         expect(TokenType::LPAREN, "'('");
         
@@ -304,13 +259,25 @@ Command Parser::parseCreate() {
             bool hasNotNull = false;
             bool hasIndexed = false;
             
-            while (true) {
-                if (match(TokenType::KW_NOT_NULL)) {
+            // Обрабатываем модификаторы в любом порядке
+            while (match(TokenType::KW_NOT_NULL) || match(TokenType::KW_INDEXED) || 
+                   match(TokenType::KW_NULL) || match(TokenType::KW_DEFAULT)) {
+                // Возвращаем токен обратно для правильной обработки
+                _pos--;
+                Token& token = peek();
+                
+                if (token.type == TokenType::KW_NOT_NULL) {
+                    advance();
+                    expect(TokenType::KW_NULL, "NULL after NOT");
                     hasNotNull = true;
-                } else if (match(TokenType::KW_INDEXED)) {
+                } else if (token.type == TokenType::KW_INDEXED) {
+                    advance();
                     hasIndexed = true;
+                } else if (token.type == TokenType::KW_DEFAULT) {
+                    advance();
+                    col.defaultValue = parseValue();
                 } else {
-                    break;
+                    advance();
                 }
             }
             
@@ -320,10 +287,6 @@ Command Parser::parseCreate() {
                 col.modifier = ColumnDef::Modifier::NOT_NULL;
             } else if (hasIndexed) {
                 col.modifier = ColumnDef::Modifier::INDEXED;
-            }
-            
-            if (match(TokenType::KW_DEFAULT)) {
-                col.defaultValue = parseValue();
             }
             
             cmd.columns.push_back(col);
@@ -496,9 +459,14 @@ Command Parser::parseSelect() {
                 col.name = token.value;
                 expect(TokenType::RPAREN, "')'");
             } else {
-                // Обычная колонка
-                Token token = expect(TokenType::IDENTIFIER, "column name");
-                col.name = token.value;
+                if (match(TokenType::BACKTICK)) {
+                    Token token = expect(TokenType::IDENTIFIER, "column name");
+                    col.name = token.value;
+                    expect(TokenType::BACKTICK, "closing backtick");
+                } else {
+                    Token token = expect(TokenType::IDENTIFIER, "column name");
+                    col.name = token.value;
+                }
                 col.aggregateFunc = AggregateFunc::NONE;
             }
             
