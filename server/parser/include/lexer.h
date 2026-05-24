@@ -11,9 +11,10 @@ enum class TokenType {
     KW_DELETE,
     KW_CREATE, KW_DROP, KW_USE,
     KW_DATABASE, KW_TABLE,
-    KW_NOT_NULL, KW_INDEXED,
-    KW_BETWEEN, KW_AND, KW_LIKE,
+    KW_NOT_NULL, KW_INDEXED, KW_DEFAULT,
+    KW_BETWEEN, KW_AND, KW_LIKE, KW_OR,
     KW_NULL,
+    KW_SUM, KW_COUNT, KW_AVG,
 
     /*Литералы*/
     INT_LITERAL,
@@ -68,7 +69,7 @@ private:
     Token readString();
     Token readOperator();
 
-    TokenType toKeyword(const std::string& word) const;
+    TokenType toKeyword(const std::string& word) const; // upper(word) -> TokenType или IDENTIFIER
 };
 
 #endif //LEXER_H

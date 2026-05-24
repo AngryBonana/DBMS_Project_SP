@@ -2,6 +2,7 @@
 #include <cctype>
 #include <unordered_map>
 #include <algorithm>
+#include <stdexcept>
 
 Lexer::Lexer(const std::string& input) 
     : input_(input), pos_(0), line_(1) {
@@ -119,9 +120,11 @@ Token Lexer::readString() {
         }
     }
     
-    if (!isEnd()) {
-        advance(); // закрывающая кавычка
+    if (isEnd()) {
+        throw std::runtime_error("Unclosed string at line " + std::to_string(startLine));
     }
+    
+    advance(); // закрывающая кавычка
     
     return {TokenType::STR_LITERAL, str, startLine};
 }
@@ -137,7 +140,7 @@ Token Lexer::readOperator() {
                 return {TokenType::OP_EQ, "==", startLine};
             }
             return {TokenType::OP_ASSIGN, "=", startLine};
-            
+                    
         case '!':
             if (!isEnd() && peek() == '=') {
                 advance();
@@ -193,6 +196,7 @@ TokenType Lexer::toKeyword(const std::string& word) const {
         {"INSERT", TokenType::KW_INSERT},
         {"INTO", TokenType::KW_INTO},
         {"VALUE", TokenType::KW_VALUE},
+        {"VALUES", TokenType::KW_VALUE},
         {"UPDATE", TokenType::KW_UPDATE},
         {"SET", TokenType::KW_SET},
         {"DELETE", TokenType::KW_DELETE},
@@ -204,9 +208,14 @@ TokenType Lexer::toKeyword(const std::string& word) const {
         {"NOT", TokenType::KW_NOT_NULL},
         {"NULL", TokenType::KW_NULL},
         {"INDEXED", TokenType::KW_INDEXED},
+        {"DEFAULT", TokenType::KW_DEFAULT},
         {"BETWEEN", TokenType::KW_BETWEEN},
         {"AND", TokenType::KW_AND},
-        {"LIKE", TokenType::KW_LIKE}
+        {"OR", TokenType::KW_OR},
+        {"LIKE", TokenType::KW_LIKE},
+        {"SUM", TokenType::KW_SUM},
+        {"COUNT", TokenType::KW_COUNT},
+        {"AVG", TokenType::KW_AVG}
     };
     
     // Приводим к верхнему регистру для регистронезависимого сравнения

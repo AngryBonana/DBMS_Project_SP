@@ -13,6 +13,7 @@ using Value = std::variant<int, std::string, std::monostate>; // monostate = NUL
 
 struct Condition {
     enum class Op { EQ, NEQ, LT, GT, LTE, GTE, BETWEEN, LIKE };
+    enum class LogicalOp { NONE, AND, OR };
 
     std::string left; // столбец или константа
     bool leftIsColumn; // true = имя столбца, false = константа
@@ -21,6 +22,18 @@ struct Condition {
     bool rightIsColumn;
     std::string right2; // только для BETWEEN
     bool right2IsColumn;
+    
+    // Составные условия
+    LogicalOp logicalOp = LogicalOp::NONE;
+    std::unique_ptr<Condition> next; // следующее условие для AND/OR
+};
+
+
+enum class AggregateFunc {
+    NONE,
+    SUM,
+    COUNT,
+    AVG
 };
 
 
@@ -43,6 +56,7 @@ struct ColumnDef {
     std::string name;
     Type type;
     Modifier modifier;
+    std::optional<Value> defaultValue; // значение по умолчанию
 };
 
 struct CreateTableCmd {
@@ -60,7 +74,7 @@ struct InsertCmd {
     std::string dbName;
     std::string tableName;
     std::vector<std::string> columns;
-    std::vector<std::vector<Value>> rows;
+    std::vector<std::vector<std::optional<Value>>> rows; // optional для пропущенных значений
 };
 
 struct Assignment {
@@ -84,6 +98,7 @@ struct DeleteCmd {
 struct SelectColumn {
     std::string name; // "*" если звёздочка
     std::string alias; // пусто, если AS не указан
+    AggregateFunc aggregateFunc = AggregateFunc::NONE;
 };
 
 struct SelectCmd {
@@ -142,12 +157,31 @@ private:
 
     // Читает значение: INT_LITERAL, STR_LITERAL или NULL
     Value parseValue();
+    
+    // Читает значение или ничего (для DEFAULT)
+    std::optional<Value> parseOptionalValue();
 
     // Читает одну сторону условия — колонку или константу
     // isColumn выставляется в true, если это идентификатор
     std::string parseOperand(bool& isColumn);
 
+    // Парсит простое условие (без AND/OR)
+    Condition parseSimpleCondition();
+    
+    // Парсит составное условие с AND/OR и скобками
     Condition parseCondition();
+    
+    // Парсит условие с учетом приоритета OR
+    Condition parseOrCondition();
+    
+    // Парсит условие с учетом приоритета AND
+    Condition parseAndCondition();
+
+    Condition parsePrimaryCondition();
+
+    // Парсит комбинированное условие
+    Condition combineConditions(Condition& left, Condition& right, Condition::LogicalOp op);
+    
 
     Command parseCreate(); // CREATE DATABASE | CREATE TABLE
     Command parseDrop(); // DROP DATABASE | DROP TABLE
