@@ -1,3 +1,4 @@
+#include "../include/parse_error.h"
 #include "../include/lexer.h"
 #include <cctype>
 #include <unordered_map>
@@ -115,16 +116,18 @@ Token Lexer::readString() {
                         break;
                 }
             }
+        } else if (peek() == '\n') {
+            str += advance();
         } else {
             str += advance();
         }
     }
     
     if (isEnd()) {
-        throw std::runtime_error("Unclosed string at line " + std::to_string(startLine));
+        throw ParseError("Unclosed string at line " + std::to_string(startLine));
     }
     
-    advance(); // закрывающая кавычка
+    advance();
     
     return {TokenType::STR_LITERAL, str, startLine};
 }

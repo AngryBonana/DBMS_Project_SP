@@ -1,6 +1,7 @@
 #ifndef PARSER_H
 #define PARSER_H
 #include "lexer.h"
+#include "parse_error.h"
 #include <memory>
 #include <optional>
 #include <variant>
@@ -26,6 +27,8 @@ struct Condition {
     // Составные условия
     LogicalOp logicalOp = LogicalOp::NONE;
     std::unique_ptr<Condition> next; // следующее условие для AND/OR
+    std::unique_ptr<Condition> leftTree;
+    bool isParenthesized = false;
 };
 
 
@@ -123,14 +126,6 @@ using Command = std::variant<
 >;
 
 
-class ParseError : public std::exception {
-public:
-    explicit ParseError(const std::string& msg) : msg_(msg) {}
-    const char* what() const noexcept override { return msg_.c_str(); }
-private:
-    std::string msg_;
-};
-
 class Parser {
 public:
     explicit Parser(std::vector<Token> tokens);
@@ -145,6 +140,7 @@ private:
     Token& advance();
     bool check(TokenType type) const;
     bool isEnd() const;
+    bool Parser::isKeyword(TokenType type);
 
     // Если текущий токен совпадает — съедает и возвращает true
     bool match(TokenType type);

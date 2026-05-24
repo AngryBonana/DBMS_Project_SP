@@ -449,12 +449,21 @@ TEST_F(ParserTest, WhereParentheses) {
     ASSERT_TRUE(selectCmd.where.has_value());
     
     const Condition& cond = selectCmd.where.value();
+    // Верхний уровень: (...) AND status == 'active'
     EXPECT_EQ(cond.logicalOp, Condition::LogicalOp::AND);
+    
+    // Правая часть: status == 'active'
     ASSERT_NE(cond.next, nullptr);
     EXPECT_EQ(cond.next->op, Condition::Op::EQ);
+    EXPECT_EQ(cond.next->left, "status");
+    EXPECT_EQ(cond.next->right, "active");
     
-    // Первое условие должно быть составным из скобок
-    EXPECT_EQ(cond.op, Condition::Op::GT);
+    // Левая часть в leftTree: (age > 18 OR role == 'admin')
+    ASSERT_NE(cond.leftTree, nullptr);
+    EXPECT_EQ(cond.leftTree->logicalOp, Condition::LogicalOp::OR);
+    EXPECT_EQ(cond.leftTree->op, Condition::Op::GT);
+    ASSERT_NE(cond.leftTree->next, nullptr);
+    EXPECT_EQ(cond.leftTree->next->op, Condition::Op::EQ);
 }
 
 TEST_F(ParserTest, WhereNestedParentheses) {
@@ -623,7 +632,22 @@ TEST_F(ParserTest, MultipleWhereConditionsWithBetween) {
     auto& selectCmd = std::get<SelectCmd>(cmd);
     
     ASSERT_TRUE(selectCmd.where.has_value());
-    EXPECT_EQ(selectCmd.where->op, Condition::Op::BETWEEN);
+    
+    // Верхний уровень: (... AND ...) OR priority == 'high'
+    const Condition& cond = selectCmd.where.value();
+    EXPECT_EQ(cond.logicalOp, Condition::LogicalOp::OR);
+    
+    // Правая часть: priority == 'high'
+    ASSERT_NE(cond.next, nullptr);
+    EXPECT_EQ(cond.next->op, Condition::Op::EQ);
+    EXPECT_EQ(cond.next->left, "priority");
+    
+    // Левая часть в leftTree: amount BETWEEN 100 AND 1000 AND status == 'completed'
+    ASSERT_NE(cond.leftTree, nullptr);
+    EXPECT_EQ(cond.leftTree->op, Condition::Op::BETWEEN);
+    EXPECT_EQ(cond.leftTree->logicalOp, Condition::LogicalOp::AND);
+    ASSERT_NE(cond.leftTree->next, nullptr);
+    EXPECT_EQ(cond.leftTree->next->op, Condition::Op::EQ);
 }
 
 // ── Тесты на полный цикл всех команд ────────────────────────────────────────
