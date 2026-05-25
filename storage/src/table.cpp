@@ -59,7 +59,8 @@ void Table::insert_row(const std::vector<std::optional<Value>>& values) {
         }
     }
 
-    rows_.push_back(std::move(row));
+    rows_.push_back(row);
+    notify_indexes_insert(rows_.size() - 1, rows_.back());
 }
 
 // --- Персистентность (сохранение/загрузка) ---
@@ -181,7 +182,20 @@ Table Table::load(const std::string& path) {
         return t;
     } else if (version >= 2) {
         // новый формат: сначала сериализован пул строк, затем строки по id
-        StringPool::instance().deserialize(in);
+        // Пул не перезаписываем целиком, а подмешиваем строки в глобальный StringPool.
+        u32 pool_count; read_bin<u32>(in, pool_count);
+        std::vector<StringPool::Id> id_map;
+        id_map.resize(static_cast<std::size_t>(pool_count) + 1);
+        id_map[0] = StringPool::kInvalid;
+        for (u32 i = 1; i <= pool_count; ++i) {
+            u32 len; read_bin<u32>(in, len);
+            std::string s;
+            s.resize(len);
+            if (len > 0) {
+                in.read(&s[0], len);
+            }
+            id_map[i] = StringPool::instance().intern(std::move(s));
+        }
 
         u32 col_count; read_bin<u32>(in, col_count);
         std::vector<ColumnDef> cols; cols.reserve(col_count);
@@ -198,7 +212,7 @@ Table Table::load(const std::string& path) {
                 u8 dt; read_bin<u8>(in, dt);
                 if (dt==0) { col.default_value = Value::null(); }
                 else if (dt==1) { i64 v; read_bin<i64>(in, v); col.default_value = Value::of_int(v); }
-                else { u32 id; read_bin<u32>(in, id); col.default_value = Value::of_str_id(static_cast<StringPool::Id>(id)); }
+                else { u32 id; read_bin<u32>(in, id); col.default_value = Value::of_str_id(id_map.at(id)); }
             }
             cols.push_back(std::move(col));
         }
@@ -214,7 +228,7 @@ Table Table::load(const std::string& path) {
                 u8 tag; read_bin<u8>(in, tag);
                 if (tag==0) { vals.push_back(std::nullopt); }
                 else if (tag==1) { i64 v; read_bin<i64>(in, v); vals.push_back(Value::of_int(v)); }
-                else { u32 id; read_bin<u32>(in, id); vals.push_back(Value::of_str_id(static_cast<StringPool::Id>(id))); }
+                else { u32 id; read_bin<u32>(in, id); vals.push_back(Value::of_str_id(id_map.at(id))); }
             }
             t.insert_row(vals);
         }
@@ -222,6 +236,40 @@ Table Table::load(const std::string& path) {
         return t;
     } else {
         throw std::runtime_error("Table::load: unsupported version");
+    }
+}
+
+void Table::attach_index(std::size_t column, IIndexPtr index, bool rebuild) {
+    if (column >= schema_.column_count()) {
+        throw std::out_of_range("Table::attach_index: column out of range");
+    }
+    if (!index) {
+        throw std::invalid_argument("Table::attach_index: index must not be null");
+    }
+
+    indexes_[column] = IndexBinding{std::move(index)};
+
+    if (rebuild) {
+        auto& binding = indexes_.at(column);
+        for (std::size_t row_id = 0; row_id < rows_.size(); ++row_id) {
+            binding.index->insert(rows_[row_id].at(column), row_id);
+        }
+    }
+}
+
+void Table::detach_index(std::size_t column) {
+    indexes_.erase(column);
+}
+
+bool Table::has_index(std::size_t column) const {
+    return indexes_.find(column) != indexes_.end();
+}
+
+void Table::notify_indexes_insert(std::size_t row_id, const std::vector<Value>& row) {
+    for (auto& [column, binding] : indexes_) {
+        if (column < row.size()) {
+            binding.index->insert(row.at(column), row_id);
+        }
     }
 }
 

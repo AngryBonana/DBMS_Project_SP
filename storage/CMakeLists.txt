@@ -5,6 +5,7 @@ add_library(storage_core
     src/string_pool.cpp
     src/table.cpp
     src/database.cpp
+    src/dbms.cpp
 )
 
 target_include_directories(storage_core PUBLIC
@@ -25,6 +26,8 @@ add_executable(storage_tests
     tests/table_test.cpp
     tests/table_persist_test.cpp
     tests/database_test.cpp
+    tests/dbms_integration_test.cpp
+    tests/index_hook_test.cpp
 )
 
 target_include_directories(storage_tests PRIVATE
