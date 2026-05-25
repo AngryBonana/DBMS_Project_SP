@@ -40,6 +40,10 @@ Value Value::of_str(std::string&& s) {
     Value x; x.tag_ = Tag::Str; x.str_id_ = StringPool::instance().intern(std::move(s)); return x;
 }
 
+Value Value::of_str_id(StringPool::Id id) noexcept {
+    Value x; x.tag_ = Tag::Str; x.str_id_ = id; return x;
+}
+
 // Получить строку по id из пула
 const std::string& Value::as_str() const {
     return StringPool::instance().get(str_id_);

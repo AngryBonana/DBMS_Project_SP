@@ -12,15 +12,20 @@
 
 namespace cw_db {
 
+// Описание колонки таблицы
 struct ColumnDef {
-    // Базовое описание столбца для storage
+    // Имя колонки
     std::string name;
+    // Тип данных столбца
     DataType type = DataType::Int;
+    // Флаги: обязательность и наличие индекса
     bool not_null = false;
     bool indexed = false;
+    // Значение по умолчанию (если есть)
     std::optional<Value> default_value;
 };
 
+// Схема таблицы: упорядоченный набор колонок + быстрый поиск по имени
 class TableSchema {
 public:
     TableSchema() = default;
@@ -52,7 +57,7 @@ public:
         return it->second;
     }
 
-    // Индекс столбца или исключение
+    // Получить индекс или бросить исключение при отсутствии
     std::size_t index_of(const std::string& name) const {
         auto index = find_index(name);
         if (!index.has_value()) {
@@ -75,6 +80,7 @@ private:
     std::vector<ColumnDef> columns_;
     std::unordered_map<std::string, std::size_t> index_by_name_;
 
+    // Установить список колонок (валидирует имена и уникальность)
     void set_columns(std::vector<ColumnDef> columns) {
         columns_.clear();
         index_by_name_.clear();
@@ -94,5 +100,4 @@ private:
         }
     }
 };
-
 }
