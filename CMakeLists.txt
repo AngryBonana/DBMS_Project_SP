@@ -19,6 +19,6 @@ FetchContent_MakeAvailable(googletest)
 
 find_package(Boost COMPONENTS system container REQUIRED) # Ставить через vcpkg
 
-# add_subdirectory(client)
+add_subdirectory(client)
 add_subdirectory(server)
 # add_subdirectory(common)
