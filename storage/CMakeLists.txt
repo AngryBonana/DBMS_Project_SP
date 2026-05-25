@@ -19,6 +19,7 @@ add_executable(storage_tests
     tests/main_test.cpp
     tests/value_test.cpp
     tests/string_pool_test.cpp
+    tests/schema_test.cpp
 )
 
 target_include_directories(storage_tests PRIVATE
