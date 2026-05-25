@@ -19,6 +19,9 @@ namespace {
     template<typename T>
     void read_bin(std::ifstream& in, T& outv) {
         in.read(reinterpret_cast<char*>(&outv), sizeof(T));
+        if (!in) {
+            throw std::runtime_error("Table::load: truncated or corrupt file");
+        }
     }
 }
 

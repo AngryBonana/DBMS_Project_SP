@@ -28,6 +28,7 @@ add_executable(storage_tests
     tests/database_test.cpp
     tests/dbms_integration_test.cpp
     tests/index_hook_test.cpp
+    tests/robustness_test.cpp
 )
 
 target_include_directories(storage_tests PRIVATE
