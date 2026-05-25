@@ -24,6 +24,8 @@ public:
     static Value of_int(int64_t v) noexcept;
     static Value of_str(const std::string& s);
     static Value of_str(std::string&& s);
+    // Создать Value, используя уже существующий id строки в StringPool
+    static Value of_str_id(StringPool::Id id) noexcept;
 
     // Доступ к тегу (Null/Int/Str)
     Tag tag() const noexcept { return tag_; }
@@ -35,6 +37,8 @@ public:
     int64_t as_int() const noexcept { return int_; }
     // Получить строку через StringPool (только для Str)
     const std::string& as_str() const;
+    // Получить id строки в пуле (только для Str)
+    StringPool::Id as_str_id() const noexcept { return str_id_; }
 
     // Совместимость значения с типом столбца (NULL совместим с любым)
     bool matches(DataType col_type) const noexcept;

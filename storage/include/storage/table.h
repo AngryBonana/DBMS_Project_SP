@@ -25,6 +25,12 @@ public:
 
     const TableSchema& schema() const noexcept { return schema_; }
 
+    // Сохранить таблицу в бинарный файл
+    void save(const std::string& path) const;
+
+    // Загрузить таблицу из бинарного файла
+    static Table load(const std::string& path);
+
 private:
     TableSchema schema_;
     std::vector<std::vector<Value>> rows_;

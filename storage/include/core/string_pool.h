@@ -20,6 +20,11 @@ public:
     // Получить строку по id (бросает при неверном id)
     const std::string& get(Id id) const;
 
+    // Сериализация пула строк в поток (не включает id 0)
+    void serialize(std::ostream& out) const;
+    // Десериализация пула из потока (перезапишет текущее содержимое)
+    void deserialize(std::istream& in);
+
 private:
     StringPool();
     mutable std::mutex mu_;
