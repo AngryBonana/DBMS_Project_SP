@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.16)
 add_library(storage_core
     src/value.cpp
     src/string_pool.cpp
+    src/table.cpp
 )
 
 target_include_directories(storage_core PUBLIC
@@ -20,6 +21,7 @@ add_executable(storage_tests
     tests/value_test.cpp
     tests/string_pool_test.cpp
     tests/schema_test.cpp
+    tests/table_test.cpp
 )
 
 target_include_directories(storage_tests PRIVATE
