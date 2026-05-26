@@ -13,26 +13,25 @@ void print_help(const std::string& name_of_prog)
 }
 
 std::string readQuery() {
-    std::string result, line;
-    while (std::getline(std::cin, line))
+    std::string result = "";
+    int c;
+    while ((c = std::cin.get()) != EOF)
     {
-        result += line + ' ';
-        if (result.find(';') != std::string::npos)
-            break;
+        result += static_cast<char>(c);
+        if (c == ';') break;
     }
     return result;
 }
 
 std::string readQueryFromFile(std::ifstream& file)
 {
-    std::string result, line;
-    while (std::getline(file, line))
+    std::string result = "";
+    int c;
+    while ((c = file.get()) != EOF)
     {
-        result += line + ' ';
-        if (result.find(';') != std::string::npos)
-            break;
+        result += static_cast<char>(c);
+        if (c == ';') break;
     }
-
     return result;
 }
 
