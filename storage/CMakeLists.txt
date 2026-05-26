@@ -6,6 +6,7 @@ add_library(storage_core
     src/table.cpp
     src/database.cpp
     src/dbms.cpp
+    src/bstarplus_adapter.cpp
 )
 
 target_include_directories(storage_core PUBLIC
@@ -13,7 +14,7 @@ target_include_directories(storage_core PUBLIC
 )
 
 target_link_libraries(storage_core PUBLIC
-    # не требуется Boost для core
+    btree_lib
 )
 
 target_compile_features(storage_core PUBLIC cxx_std_17)
@@ -29,6 +30,7 @@ add_executable(storage_tests
     tests/dbms_integration_test.cpp
     tests/index_hook_test.cpp
     tests/robustness_test.cpp
+    tests/index_adapter_test.cpp
 )
 
 target_include_directories(storage_tests PRIVATE
