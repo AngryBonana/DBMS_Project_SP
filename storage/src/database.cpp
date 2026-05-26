@@ -7,7 +7,7 @@ namespace cw_db {
 void Database::save_to(const std::filesystem::path& dir) const {
     std::filesystem::create_directories(dir);
     std::error_code ec;
-    // Удаляем .dat файлы таблиц, которых больше нет
+    // Удаляем старые .dat-файлы, которые уже не соответствуют текущему набору таблиц.
     for (auto& entry : std::filesystem::directory_iterator(dir, ec)) {
         if (!entry.is_regular_file()) continue;
         if (entry.path().extension() != ".dat") continue;
@@ -16,6 +16,7 @@ void Database::save_to(const std::filesystem::path& dir) const {
             std::filesystem::remove(entry.path(), ec);
     }
 
+    // Каждую таблицу сохраняем в отдельный бинарный файл.
     for (const auto& [tname, table] : tables_) {
         auto p = dir / (tname + ".dat");
         table->save(p.string());
@@ -25,6 +26,7 @@ void Database::save_to(const std::filesystem::path& dir) const {
 void Database::load_from(const std::filesystem::path& dir) {
     tables_.clear();
     if (!std::filesystem::exists(dir)) return;
+    // Поднимаем все таблицы из каталога по файлам .dat.
     for (auto& entry : std::filesystem::directory_iterator(dir)) {
         if (!entry.is_regular_file()) continue;
         if (entry.path().extension() != ".dat") continue;

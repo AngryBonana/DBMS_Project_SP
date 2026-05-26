@@ -70,6 +70,7 @@ Row Table::materialize(const std::vector<int>& column_positions, std::vector<Val
 
 bool Table::value_exists_in_column(std::size_t column, const Value& value,
                                    std::optional<RowId> exclude_id) const {
+    // Если индекс уже подключён, используем его как быстрый путь проверки.
     if (auto index_it = indexes_.find(column); index_it != indexes_.end()) {
         const auto found = index_it->second.index->find(value);
         if (!found.has_value()) {
@@ -78,6 +79,7 @@ bool Table::value_exists_in_column(std::size_t column, const Value& value,
         return !exclude_id.has_value() || *found != *exclude_id;
     }
 
+    // Иначе делаем обычный линейный проход по строкам таблицы.
     for (const auto& [row_id, row] : rows_) {
         if (exclude_id.has_value() && row_id == *exclude_id) {
             continue;
@@ -173,11 +175,13 @@ void Table::notify_indexes_update(RowId row_id, std::size_t column, const Value&
         return;
     }
 
+    // Сначала убираем старый ключ, затем добавляем новый.
     it->second.index->erase(old_value);
     it->second.index->insert(new_value, row_id);
 }
 
 void Table::notify_indexes_erase(const Row& row) {
+    // Снимаем все ключи строки со всех подключённых индексов.
     for (const auto& [column, binding] : indexes_) {
         if (column < row.values.size()) {
             binding.index->erase(row.values.at(column));
@@ -225,20 +229,20 @@ void Table::save(const std::string& path) const {
     std::ofstream out(tmp.string(), std::ios::binary);
     if (!out) throw std::runtime_error("Table::save: cannot open temporary file");
 
-        // Заголовок: magic 'CWDB', версия u32
-        write_bin<std::uint32_t>(out, kMagic);
-        write_bin<std::uint32_t>(out, kVersionV3);
+    // Заголовок: magic 'CWDB' и версия формата.
+    write_bin<std::uint32_t>(out, kMagic);
+    write_bin<std::uint32_t>(out, kVersionV3);
 
-        // Имя таблицы
-        u16 name_len = static_cast<u16>(name_.size());
-        write_bin<u16>(out, name_len);
-        out.write(name_.data(), name_len);
+    // Имя таблицы.
+    u16 name_len = static_cast<u16>(name_.size());
+    write_bin<u16>(out, name_len);
+    out.write(name_.data(), name_len);
 
     // Сериализуем StringPool (чтобы затем ссылаться на строки по id)
     StringPool::instance().serialize(out);
 
-    // Описание колонок
-        u32 col_count = static_cast<u32>(schema_.column_count());
+    // Описание колонок.
+    u32 col_count = static_cast<u32>(schema_.column_count());
     write_bin<u32>(out, col_count);
     for (const auto& col : schema_.columns()) {
         u16 name_len = static_cast<u16>(col.name.size());
@@ -260,7 +264,7 @@ void Table::save(const std::string& path) const {
                 write_bin<u8>(out, (u8)1);
                 i64 v = dv.as_int(); write_bin<i64>(out, v);
             } else {
-                // Для версии 2 сохраняем id строки в пуле
+                // Строка уже лежит в пуле, поэтому сохраняем только её id.
                 write_bin<u8>(out, (u8)2);
                 u32 id = static_cast<u32>(dv.as_str_id()); write_bin<u32>(out, id);
             }

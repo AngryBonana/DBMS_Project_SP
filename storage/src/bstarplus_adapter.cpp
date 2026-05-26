@@ -10,6 +10,7 @@ BStarPlusIndexAdapter::BStarPlusIndexAdapter(std::filesystem::path path, db::Ind
 }
 
 db::IndexKey BStarPlusIndexAdapter::to_index_key(const Value& value) {
+    // Преобразуем storage::Value в ключ формата партнёрского индекса.
     if (value.is_int()) {
         return static_cast<std::int64_t>(value.as_int());
     }
@@ -26,6 +27,7 @@ std::optional<RowId> BStarPlusIndexAdapter::find(const Value& key) const {
     if (!result.has_value()) {
         return std::nullopt;
     }
+    // RowId у нас шире, поэтому приводим тип только на границе адаптера.
     return static_cast<RowId>(*result);
 }
 

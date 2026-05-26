@@ -57,6 +57,7 @@ bool Value::matches(DataType col_type) const noexcept {
 }
 
 int Value::compare(const Value& other, bool& valid) const noexcept {
+    // NULL и разные типы не сравниваем в SQL-смысле.
     if (is_null() || other.is_null()) { valid = false; return 0; }
     if (tag_ != other.tag_) { valid = false; return 0; }
     valid = true;
@@ -65,6 +66,7 @@ int Value::compare(const Value& other, bool& valid) const noexcept {
         if (int_ > other.int_) return 1;
         return 0;
     }
+    // Интернированные строки сравниваем быстро по id, если они совпали.
     if (str_id_ == other.str_id_) return 0;
     const auto& a = as_str();
     const auto& b = other.as_str();
