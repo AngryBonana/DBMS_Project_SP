@@ -18,9 +18,10 @@ FetchContent_Declare(
         URL https://github.com/google/googletest/archive/refs/tags/v1.17.0.zip)
 FetchContent_MakeAvailable(googletest)
 
-find_package(Boost COMPONENTS system container REQUIRED) # Ставить через vcpkg
+find_package(Boost COMPONENTS system container REQUIRED) 
 
-# add_subdirectory(client)
+add_subdirectory(client)
 add_subdirectory(server)
 add_subdirectory(index)
+add_subdirectory(storage)
 # add_subdirectory(common)
