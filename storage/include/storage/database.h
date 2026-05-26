@@ -37,7 +37,7 @@ public:
     // Создать таблицу с заданной схемой; бросает если уже есть
     Table& create_table(const std::string& name, const TableSchema& schema) {
         if (has_table(name)) throw std::runtime_error("Table '" + name + "' already exists");
-        auto ptr = std::make_unique<Table>(schema);
+        auto ptr = std::make_unique<Table>(name, schema);
         Table& ref = *ptr;
         tables_.emplace(name, std::move(ptr));
         return ref;

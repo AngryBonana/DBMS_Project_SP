@@ -44,3 +44,22 @@ TEST(TableTest, TypeMismatchThrows) {
     // type mismatch: string into int
     EXPECT_THROW(t.insert_row({Value::of_str("bad"), Value::of_str("X")}), std::invalid_argument);
 }
+
+TEST(TableTest, RowIdsStayStableAfterErase) {
+    TableSchema schema({
+        {"id", DataType::Int, true, true, std::nullopt},
+        {"name", DataType::Str, false, false, std::nullopt}
+    });
+
+    Table table(schema);
+    const RowId first = table.insert(Row{{Value::of_int(1), Value::of_str("A")}});
+    const RowId second = table.insert(Row{{Value::of_int(2), Value::of_str("B")}});
+
+    EXPECT_NE(first, second);
+    EXPECT_EQ(table.row_count(), 2u);
+
+    table.erase(first);
+    EXPECT_EQ(table.row_count(), 1u);
+    EXPECT_EQ(table.get_row(0)[0].as_int(), 2);
+    EXPECT_EQ(table.get_row(0)[1].as_str(), "B");
+}

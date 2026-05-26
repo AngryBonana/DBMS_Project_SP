@@ -18,6 +18,7 @@ StringPool::StringPool() {
 
 StringPool::Id StringPool::intern(const std::string& s) {
     std::lock_guard lock(mu_);
+    // Сначала ищем уже существующую строку, чтобы не плодить дубликаты.
     auto it = by_value_.find(s);
     if (it != by_value_.end()) return it->second;
     Id id = static_cast<Id>(by_id_.size());
@@ -64,6 +65,7 @@ void StringPool::deserialize(std::istream& in) {
     by_id_.push_back(""); // reserve id 0
     uint32_t count = 0;
     in.read(reinterpret_cast<char*>(&count), sizeof(count));
+    // Восстанавливаем пул в том же порядке, в каком он был сохранён.
     for (uint32_t i = 0; i < count; ++i) {
         uint32_t len = 0;
         in.read(reinterpret_cast<char*>(&len), sizeof(len));
