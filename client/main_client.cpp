@@ -51,6 +51,12 @@ int main(int argc, char* argv[])
             return 1;
         }
 
+        if (port < 0 || port > 65535)
+        {
+            std::cerr << "Invalid port number" << std::endl;
+            return 1;
+        }
+
         Client client;
         try {
             client.connect("127.0.0.1", port);
