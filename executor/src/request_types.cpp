@@ -11,8 +11,11 @@
 
 #include <array>
 #include <cstdio>
+#include <ctime>
+#include <iomanip>
 #include <random>
 #include <regex>
+#include <sstream>
 
 namespace executor {
 
@@ -55,6 +58,21 @@ bool isValidRequestId(const std::string& id) {
         std::regex::ECMAScript);
 
     return std::regex_match(id, pattern);
+}
+
+std::string formatTimestamp(
+    const std::chrono::system_clock::time_point& tp) {
+    const std::time_t t = std::chrono::system_clock::to_time_t(tp);
+    std::tm tm{};
+#ifdef _WIN32
+    localtime_s(&tm, &t);
+#else
+    localtime_r(&t, &tm);
+#endif
+
+    std::ostringstream ss;
+    ss << std::put_time(&tm, "%Y-%m-%d %H:%M:%S");
+    return ss.str();
 }
 
 }  // namespace executor

@@ -1,12 +1,6 @@
 /**
  * @file async_executor.cpp
  * @brief Реализация асинхронного исполнителя.
- *
- * Управляет фоновым рабочим потоком, очередью задач (Job), состоянием
- * каждого запроса (snapshots_). При получении задачи обновляет статус,
- * вызывает переданный обработчик, фиксирует время выполнения и результат.
- * При наличии логгера записывает информацию о выполненном запросе.
- * Уведомляет ожидающие потоки через condition_variable.
  */
 #include "async_executor.h"
 
@@ -14,8 +8,43 @@
 
 namespace executor {
 
-AsyncExecutor::AsyncExecutor(QueryHandler handler, AccessLogger* accessLogger)
-    : handler_(std::move(handler)), accessLogger_(accessLogger) {
+namespace {
+
+RequestStatusInfo toStatusInfo(const RequestSnapshot& snapshot) {
+    return RequestStatusInfo{
+        snapshot.id,
+        snapshot.status,
+        snapshot.submittedAt,
+        snapshot.startedAt,
+        snapshot.finishedAt,
+    };
+}
+
+RequestResultInfo toResultInfo(const RequestSnapshot& snapshot) {
+    RequestResultInfo info;
+    info.id = snapshot.id;
+    info.status = snapshot.status;
+
+    if (snapshot.status == RequestStatus::Completed) {
+        info.ready = true;
+        info.result = snapshot.result;
+    } else if (snapshot.status == RequestStatus::Failed) {
+        info.ready = true;
+        info.error = snapshot.error;
+    } else {
+        info.ready = false;
+    }
+
+    return info;
+}
+
+}  // namespace
+
+AsyncExecutor::AsyncExecutor(QueryHandler handler, AccessLogger* accessLogger,
+                             std::size_t maxStoredRequests)
+    : handler_(std::move(handler)),
+      accessLogger_(accessLogger),
+      maxStoredRequests_(maxStoredRequests) {
     worker_ = std::thread([this]() { workerLoop(); });
 }
 
@@ -33,10 +62,18 @@ AsyncExecutor::~AsyncExecutor() {
 RequestId AsyncExecutor::submit(const std::string& query,
                                 const std::string& clientId) {
     const RequestId id = generateRequestId();
+    const auto submittedAt = std::chrono::system_clock::now();
 
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        snapshots_[id] = RequestSnapshot{id, RequestStatus::Pending, {}, {}};
+        pruneOldSnapshotsLocked();
+
+        RequestSnapshot snapshot;
+        snapshot.id = id;
+        snapshot.status = RequestStatus::Pending;
+        snapshot.submittedAt = submittedAt;
+        snapshots_[id] = std::move(snapshot);
+
         queue_.push(Job{id, clientId, query});
     }
 
@@ -52,6 +89,24 @@ std::optional<RequestSnapshot> AsyncExecutor::getSnapshot(
         return std::nullopt;
     }
     return it->second;
+}
+
+std::optional<RequestStatusInfo> AsyncExecutor::getStatus(
+    const RequestId& id) const {
+    const auto snapshot = getSnapshot(id);
+    if (!snapshot) {
+        return std::nullopt;
+    }
+    return toStatusInfo(*snapshot);
+}
+
+std::optional<RequestResultInfo> AsyncExecutor::getResult(
+    const RequestId& id) const {
+    const auto snapshot = getSnapshot(id);
+    if (!snapshot) {
+        return std::nullopt;
+    }
+    return toResultInfo(*snapshot);
 }
 
 bool AsyncExecutor::waitUntilFinished(const RequestId& id,
@@ -89,13 +144,13 @@ void AsyncExecutor::workerLoop() {
 }
 
 void AsyncExecutor::processJob(const Job& job) {
-    updateSnapshot(job.id, RequestStatus::Running, std::nullopt,
-                   std::nullopt);
+    updateSnapshot(job.id, RequestStatus::Running, std::nullopt, std::nullopt,
+                   true, false);
 
     const auto startTime = std::chrono::system_clock::now();
-    const std::string handlerId = job.id;
+    const std::string handlerId = allocateHandlerId();
 
-    int statusCode = 0;
+    int statusCode = static_cast<int>(ReturnCode::Ok);
     std::string statusMessage = "OK";
     std::optional<std::string> result;
     std::optional<std::string> error;
@@ -103,7 +158,7 @@ void AsyncExecutor::processJob(const Job& job) {
     try {
         result = handler_(job.query);
     } catch (const std::exception& ex) {
-        statusCode = 1;
+        statusCode = static_cast<int>(ReturnCode::Error);
         statusMessage = ex.what();
         error = statusMessage;
     }
@@ -111,9 +166,11 @@ void AsyncExecutor::processJob(const Job& job) {
     const auto endTime = std::chrono::system_clock::now();
 
     if (error) {
-        updateSnapshot(job.id, RequestStatus::Failed, std::nullopt, error);
+        updateSnapshot(job.id, RequestStatus::Failed, std::nullopt, error,
+                       false, true);
     } else {
-        updateSnapshot(job.id, RequestStatus::Completed, result, std::nullopt);
+        updateSnapshot(job.id, RequestStatus::Completed, result, std::nullopt,
+                       false, true);
     }
 
     if (accessLogger_) {
@@ -133,13 +190,51 @@ void AsyncExecutor::processJob(const Job& job) {
 
 void AsyncExecutor::updateSnapshot(const RequestId& id, RequestStatus status,
                                    const std::optional<std::string>& result,
-                                   const std::optional<std::string>& error) {
+                                   const std::optional<std::string>& error,
+                                   bool setStarted, bool setFinished) {
     std::lock_guard<std::mutex> lock(mutex_);
     auto& snapshot = snapshots_[id];
     snapshot.id = id;
     snapshot.status = status;
     snapshot.result = result;
     snapshot.error = error;
+
+    if (setStarted) {
+        snapshot.startedAt = std::chrono::system_clock::now();
+    }
+    if (setFinished) {
+        snapshot.finishedAt = std::chrono::system_clock::now();
+    }
+}
+
+void AsyncExecutor::pruneOldSnapshotsLocked() {
+    if (snapshots_.size() < maxStoredRequests_) {
+        return;
+    }
+
+    // Удаляем самый старый завершённый снимок, чтобы не раздувать память.
+    auto oldestFinished = snapshots_.end();
+    for (auto it = snapshots_.begin(); it != snapshots_.end(); ++it) {
+        const bool finished =
+            it->second.status == RequestStatus::Completed ||
+            it->second.status == RequestStatus::Failed;
+        if (!finished) {
+            continue;
+        }
+        if (oldestFinished == snapshots_.end() ||
+            (it->second.finishedAt && oldestFinished->second.finishedAt &&
+             *it->second.finishedAt < *oldestFinished->second.finishedAt)) {
+            oldestFinished = it;
+        }
+    }
+
+    if (oldestFinished != snapshots_.end()) {
+        snapshots_.erase(oldestFinished);
+    }
+}
+
+std::string AsyncExecutor::allocateHandlerId() {
+    return "handler-" + std::to_string(nextHandlerSeq_.fetch_add(1));
 }
 
 }  // namespace executor

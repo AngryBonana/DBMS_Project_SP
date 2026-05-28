@@ -1,13 +1,14 @@
 /**
  * @file executor.h
- * @brief Агрегирующий заголовок для модуля исполнителя.
+ * @brief Агрегирующий заголовок модуля executor.
  *
- * Включает все основные интерфейсы модуля: определения типов запросов,
- * асинхронный исполнитель и логгер доступа. Достаточно подключить этот
- * файл для использования всего функционала.
+ * Подключите этот файл на сервере для доступа к ExecutorService и типам API.
  */
 #pragma once
 
 #include "access_logger.h"
 #include "async_executor.h"
+#include "executor_service.h"
+#include "json_response.h"
+#include "query_classifier.h"
 #include "request_types.h"
