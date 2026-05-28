@@ -11,20 +11,36 @@ namespace executor {
 
 namespace {
 
+std::string escapeJsonStringImpl(const std::string& value);
+
+bool looksLikeJsonValue(const std::string& value) {
+    if (value.empty()) {
+        return false;
+    }
+    const char first = value.front();
+    return first == '[' || first == '{';
+}
+
+void appendJsonOrStringField(std::ostringstream& out, const std::string& value) {
+    if (looksLikeJsonValue(value)) {
+        out << value;
+    } else {
+        out << '"' << escapeJsonStringImpl(value) << '"';
+    }
+}
+
 void appendOptionalTimestamp(std::ostringstream& out,
                              const char* fieldName,
                              const std::optional<std::chrono::system_clock::time_point>& tp) {
     out << ",\"" << fieldName << "\":";
     if (tp) {
-        out << "\"" << escapeJsonString(formatTimestamp(*tp)) << "\"";
+        out << "\"" << escapeJsonStringImpl(formatTimestamp(*tp)) << "\"";
     } else {
         out << "null";
     }
 }
 
-}  // namespace
-
-std::string escapeJsonString(const std::string& value) {
+std::string escapeJsonStringImpl(const std::string& value) {
     std::string escaped;
     escaped.reserve(value.size());
 
@@ -50,10 +66,17 @@ std::string escapeJsonString(const std::string& value) {
     return escaped;
 }
 
+}  // namespace
+
+std::string escapeJsonString(const std::string& value) {
+    return escapeJsonStringImpl(value);
+}
+
 std::string buildSyncResponse(const std::string& result, int statusCode) {
     std::ostringstream out;
-    out << "{\"mode\":\"sync\",\"status_code\":" << statusCode
-        << ",\"result\":\"" << escapeJsonString(result) << "\"}";
+    out << "{\"mode\":\"sync\",\"status_code\":" << statusCode << ",\"result\":";
+    appendJsonOrStringField(out, result);
+    out << '}';
     return out.str();
 }
 
@@ -86,10 +109,12 @@ std::string buildResultResponse(const RequestResultInfo& info) {
         << ",\"status\":\"" << toString(info.status) << "\"";
 
     if (info.ready && info.result) {
-        out << ",\"result\":\"" << escapeJsonString(*info.result) << "\"";
+        out << ",\"result\":";
+        appendJsonOrStringField(out, *info.result);
     }
     if (info.ready && info.error) {
-        out << ",\"error\":\"" << escapeJsonString(*info.error) << "\"";
+        out << ",\"error\":";
+        appendJsonOrStringField(out, *info.error);
     }
 
     out << "}";

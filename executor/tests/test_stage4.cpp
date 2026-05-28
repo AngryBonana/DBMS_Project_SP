@@ -30,7 +30,7 @@ TEST(ExecutorStage4, InsertUpdateDeleteAndSelectJson) {
 
     EXPECT_EQ(engine.execute("CREATE DATABASE app;"), "OK");
     EXPECT_EQ(engine.execute("USE app;"), "OK");
-    EXPECT_EQ(engine.execute("CREATE TABLE users (id int INDEXED, name string NOT_NULL, city string);"), "OK");
+    EXPECT_EQ(engine.execute("CREATE TABLE users (id INT INDEXED, name STRING NOT_NULL, city STRING);"), "OK");
 
     EXPECT_EQ(engine.execute("INSERT INTO users (id, name, city) VALUE (1, \"Ann\", \"Minsk\"), (2, \"Bob\", \"Brest\");"), "OK");
     EXPECT_EQ(engine.execute("UPDATE users SET city = \"Grodno\" WHERE id == 2;"), "OK");
@@ -51,7 +51,7 @@ TEST(ExecutorStage4, ConditionEvaluatorBetweenLikeAndComparisons) {
 
     EXPECT_EQ(engine.execute("CREATE DATABASE app;"), "OK");
     EXPECT_EQ(engine.execute("USE app;"), "OK");
-    EXPECT_EQ(engine.execute("CREATE TABLE logs (id int INDEXED, msg string NOT_NULL);"), "OK");
+    EXPECT_EQ(engine.execute("CREATE TABLE logs (id INT INDEXED, msg STRING NOT_NULL);"), "OK");
     EXPECT_EQ(engine.execute("INSERT INTO logs (id, msg) VALUE (10, \"alpha\"), (11, \"beta\"), (12, \"alphabet\");"), "OK");
 
     const std::string between = engine.execute("SELECT * FROM logs WHERE id BETWEEN 10 AND 12;");

@@ -3,8 +3,8 @@
  * @brief Реализация парсера служебных команд executor.
  */
 #include "request_api.h"
+#include "string_utils.h"
 
-#include <algorithm>
 #include <cctype>
 #include <vector>
 
@@ -12,28 +12,11 @@ namespace executor {
 
 namespace {
 
-std::string trim(const std::string& text) {
-    const auto notSpace = [](unsigned char c) { return !std::isspace(c); };
-    const auto begin = std::find_if(text.begin(), text.end(), notSpace);
-    const auto end = std::find_if(text.rbegin(), text.rend(), notSpace).base();
-    if (begin >= end) {
-        return {};
-    }
-    return std::string(begin, end);
-}
-
 std::string removeOptionalSemicolon(std::string s) {
     if (!s.empty() && s.back() == ';') {
         s.pop_back();
     }
     return trim(s);
-}
-
-std::string toUpperAscii(std::string s) {
-    for (char& ch : s) {
-        ch = static_cast<char>(std::toupper(static_cast<unsigned char>(ch)));
-    }
-    return s;
 }
 
 std::vector<std::string> splitBySpace(const std::string& text) {

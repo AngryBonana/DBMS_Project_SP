@@ -25,7 +25,7 @@ TEST_F(LexerTest, EmptyInput) {
 }
 
 TEST_F(LexerTest, Keywords) {
-    auto tokens = tokenize("SELECT FROM WHERE AS INSERT INTO VALUE UPDATE SET DELETE CREATE DROP USE DATABASE TABLE NOT NULL INDEXED DEFAULT BETWEEN AND OR LIKE SUM COUNT AVG");
+    auto tokens = tokenize("SELECT FROM WHERE AS INSERT INTO VALUE UPDATE SET DELETE CREATE DROP USE DATABASE TABLE NOT_NULL INDEXED DEFAULT BETWEEN AND OR LIKE SUM COUNT AVG");
     
     struct ExpectedToken {
         TokenType type;
@@ -48,8 +48,7 @@ TEST_F(LexerTest, Keywords) {
         {TokenType::KW_USE, "USE"},
         {TokenType::KW_DATABASE, "DATABASE"},
         {TokenType::KW_TABLE, "TABLE"},
-        {TokenType::KW_NOT_NULL, "NOT"},
-        {TokenType::KW_NULL, "NULL"},
+        {TokenType::KW_NOT_NULL, "NOT_NULL"},
         {TokenType::KW_INDEXED, "INDEXED"},
         {TokenType::KW_DEFAULT, "DEFAULT"},
         {TokenType::KW_BETWEEN, "BETWEEN"},
@@ -232,7 +231,7 @@ TEST_F(LexerTest, ComplexQuery) {
 }
 
 TEST_F(LexerTest, CreateTableWithDefault) {
-    auto tokens = tokenize("CREATE TABLE users (id INT NOT NULL INDEXED, name STR DEFAULT 'Unknown')");
+    auto tokens = tokenize("CREATE TABLE users (id INT NOT_NULL INDEXED, name STR DEFAULT 'Unknown')");
     
     ASSERT_GT(tokens.size(), 10);
     
@@ -242,13 +241,12 @@ TEST_F(LexerTest, CreateTableWithDefault) {
     expectToken(tokens[3], TokenType::LPAREN, "(", 1);
     expectToken(tokens[4], TokenType::IDENTIFIER, "id", 1);
     expectToken(tokens[5], TokenType::IDENTIFIER, "INT", 1);
-    expectToken(tokens[6], TokenType::KW_NOT_NULL, "NOT", 1);
-    expectToken(tokens[7], TokenType::KW_NULL, "NULL", 1);
-    expectToken(tokens[8], TokenType::KW_INDEXED, "INDEXED", 1);
-    expectToken(tokens[9], TokenType::COMMA, ",", 1);
-    expectToken(tokens[10], TokenType::IDENTIFIER, "name", 1);
-    expectToken(tokens[11], TokenType::IDENTIFIER, "STR", 1);
-    expectToken(tokens[12], TokenType::KW_DEFAULT, "DEFAULT", 1);
+    expectToken(tokens[6], TokenType::KW_NOT_NULL, "NOT_NULL", 1);
+    expectToken(tokens[7], TokenType::KW_INDEXED, "INDEXED", 1);
+    expectToken(tokens[8], TokenType::COMMA, ",", 1);
+    expectToken(tokens[9], TokenType::IDENTIFIER, "name", 1);
+    expectToken(tokens[10], TokenType::IDENTIFIER, "STR", 1);
+    expectToken(tokens[11], TokenType::KW_DEFAULT, "DEFAULT", 1);
 }
 
 // ── Тесты агрегатных функций ─────────────────────────────────────────────────

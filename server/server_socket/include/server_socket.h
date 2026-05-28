@@ -2,13 +2,15 @@
 #define SERVER_SOCKET_H
 
 #include <boost/asio.hpp>
+#include <cstdint>
 #include <functional>
 #include <string>
 #include "logger.h"
 
 using boost::asio::ip::tcp;
 
-using QueryHandler = std::function<std::string(const std::string&)>;
+using QueryHandler = std::function<std::string(const std::string& query,
+                                               const std::string& clientId)>;
 
 class Session : public std::enable_shared_from_this<Session> {
 public:

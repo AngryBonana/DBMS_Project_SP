@@ -64,12 +64,14 @@ void Dbms::save_database(const std::string& name) const {
     it->second->save_to(root_ / name);
 }
 
+// Сохраняет все загруженные БД в подкаталоги data_root/<name>.
 void Dbms::save_all() const {
     for (const auto& [name, db] : databases_) {
         db->save_to(root_ / name);
     }
 }
 
+// Восстанавливает БД из каталога data_root при старте сервера.
 void Dbms::load_all() {
     databases_.clear();
     if (!std::filesystem::exists(root_)) {

@@ -34,6 +34,7 @@ if(TARGET GTest::gtest)
         tests/test_stage2.cpp
         tests/test_stage3.cpp
         tests/test_stage4.cpp
+        tests/test_sql_smoke.cpp
     )
 
     target_link_libraries(executor_tests PRIVATE
@@ -44,7 +45,7 @@ if(TARGET GTest::gtest)
 
     target_compile_features(executor_tests PRIVATE cxx_std_17)
 
-    add_test(NAME ExecutorTests COMMAND executor_tests)
+    add_test(NAME ExecutorTests COMMAND $<TARGET_FILE:executor_tests>)
 endif()
 
 # Автономная сборка только executor: cmake -S executor -B executor/build
@@ -63,6 +64,7 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND NOT TARGET GTest::gtest)
         tests/test_stage2.cpp
         tests/test_stage3.cpp
         tests/test_stage4.cpp
+        tests/test_sql_smoke.cpp
     )
 
     target_link_libraries(executor_tests PRIVATE
@@ -71,5 +73,5 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND NOT TARGET GTest::gtest)
         GTest::gtest_main
     )
 
-    add_test(NAME ExecutorTests COMMAND executor_tests)
+    add_test(NAME ExecutorTests COMMAND $<TARGET_FILE:executor_tests>)
 endif()

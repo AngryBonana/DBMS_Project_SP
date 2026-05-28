@@ -283,10 +283,10 @@ Command Parser::parseCreate() {
             col.modifier = ColumnDef::Modifier::NONE;
             bool hasNotNull = false, hasIndexed = false;
 
+            // Модификаторы колонки: NOT_NULL, INDEXED, DEFAULT, опционально NULL.
             while (true) {
                 if (check(TokenType::KW_NOT_NULL)) {
                     advance();
-                    expect(TokenType::KW_NULL, "NULL after NOT");
                     hasNotNull = true;
                 } else if (check(TokenType::KW_INDEXED)) {
                     advance();

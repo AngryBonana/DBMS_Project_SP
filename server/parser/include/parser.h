@@ -140,7 +140,7 @@ private:
     Token& advance();
     bool check(TokenType type) const;
     bool isEnd() const;
-    bool Parser::isKeyword(TokenType type);
+    bool isKeyword(TokenType type);
 
     // Если текущий токен совпадает — съедает и возвращает true
     bool match(TokenType type);

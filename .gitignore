@@ -67,3 +67,9 @@ vcpkg_installed/
 # test output & cache
 Testing/
 .cache/
+
+# Runtime DBMS data and logs
+data/
+db_log.txt
+access.log
+executor_stage*.log

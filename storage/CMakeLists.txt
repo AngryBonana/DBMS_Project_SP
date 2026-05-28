@@ -57,4 +57,4 @@ target_link_libraries(storage_tests PRIVATE
 
 target_compile_features(storage_tests PRIVATE cxx_std_17)
 
-add_test(NAME StorageTests COMMAND storage_tests)
+add_test(NAME StorageTests COMMAND $<TARGET_FILE:storage_tests>)

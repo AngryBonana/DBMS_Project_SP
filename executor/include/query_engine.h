@@ -41,30 +41,30 @@ private:
     std::string execute_delete(const DeleteCmd& cmd);
     std::string execute_select(const SelectCmd& cmd);
 
-    Database& resolve_database(const std::string& explicitDbName);
-    Table& resolve_table(const std::string& explicitDbName, const std::string& tableName);
+    cw_db::Database& resolve_database(const std::string& explicitDbName);
+    cw_db::Table& resolve_table(const std::string& explicitDbName, const std::string& tableName);
 
     cw_db::Value parser_value_to_storage(const ::Value& v) const;
     cw_db::DataType parser_type_to_storage(ColumnDef::Type t) const;
     cw_db::TableSchema build_schema(const std::vector<ColumnDef>& columns) const;
 
     bool evaluate_condition(const Condition& condition,
-                            const Table& table,
+                            const cw_db::Table& table,
                             const std::vector<cw_db::Value>& row) const;
     bool evaluate_simple_condition(const Condition& condition,
-                                   const Table& table,
+                                   const cw_db::Table& table,
                                    const std::vector<cw_db::Value>& row) const;
     cw_db::Value resolve_operand(const std::string& text, bool isColumn,
-                                 const Table& table,
+                                 const cw_db::Table& table,
                                  const std::vector<cw_db::Value>& row) const;
     cw_db::Value parse_literal_for_column(const std::string& text,
                                           cw_db::DataType expectedType) const;
 
-    std::vector<cw_db::RowId> collect_candidate_rows(const Table& table,
+    std::vector<cw_db::RowId> collect_candidate_rows(const cw_db::Table& table,
                                                      const std::optional<Condition>& where,
                                                      bool& usedIndex) const;
     std::string value_to_json(const cw_db::Value& value) const;
-    std::string row_to_json_object(const Table& table,
+    std::string row_to_json_object(const cw_db::Table& table,
                                    const std::vector<cw_db::Value>& row,
                                    const SelectCmd& cmd) const;
     std::string escape_json(const std::string& s) const;
@@ -72,7 +72,9 @@ private:
     std::shared_ptr<cw_db::IIndex> make_index_for_column(const std::string& dbName,
                                                           const std::string& tableName,
                                                           const cw_db::ColumnDef& column) const;
-    void attach_indexes_for_table(const std::string& dbName, const std::string& tableName, Table& table);
+    void attach_indexes_for_table(const std::string& dbName,
+                                  const std::string& tableName,
+                                  cw_db::Table& table);
     void attach_indexes_for_loaded_data();
 
     std::filesystem::path dataRoot_;

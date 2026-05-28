@@ -193,6 +193,7 @@ Token Lexer::readOperator() {
     return {TokenType::END, "", startLine};
 }
 
+// Сопоставление слов с ключевыми токенами; NOT_NULL — один модификатор по ТЗ.
 TokenType Lexer::toKeyword(const std::string& word) const {
     static const std::unordered_map<std::string, TokenType> keywords = {
         {"SELECT", TokenType::KW_SELECT},
@@ -211,7 +212,7 @@ TokenType Lexer::toKeyword(const std::string& word) const {
         {"USE", TokenType::KW_USE},
         {"DATABASE", TokenType::KW_DATABASE},
         {"TABLE", TokenType::KW_TABLE},
-        {"NOT", TokenType::KW_NOT_NULL},
+        {"NOT_NULL", TokenType::KW_NOT_NULL},
         {"NULL", TokenType::KW_NULL},
         {"INDEXED", TokenType::KW_INDEXED},
         {"DEFAULT", TokenType::KW_DEFAULT},
