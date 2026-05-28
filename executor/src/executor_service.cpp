@@ -7,6 +7,7 @@
 #include "json_response.h"
 #include "query_classifier.h"
 #include "request_api.h"
+#include "string_utils.h"
 
 namespace executor {
 
@@ -99,6 +100,14 @@ std::string ExecutorService::executeSync(const std::string& query,
         statusCode,
         statusMessage,
     });
+
+    // SELECT (п. 0 ТЗ): в терминал — только JSON-массив строк, без API-обёртки.
+    if (statusCode == static_cast<int>(ReturnCode::Ok)) {
+        const std::string trimmed = trim(responseBody);
+        if (!trimmed.empty() && trimmed.front() == '[') {
+            return trimmed;
+        }
+    }
 
     return buildSyncResponse(responseBody, statusCode);
 }

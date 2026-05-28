@@ -57,5 +57,3 @@ CREATE TABLE users (id INT NOT_NULL INDEXED, name STRING NOT_NULL);
 | `server` | TCP-сервер (Boost.Asio) |
 | `client` | TCP-клиент и `sendAndWait` |
 | `demo` | SQL-скрипты и `run_demo.sh` |
-
-Подробный чеклист для сдачи: [SUBMISSION.md](SUBMISSION.md).

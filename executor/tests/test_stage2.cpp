@@ -55,6 +55,17 @@ TEST(ExecutorStage2, SubmitAsyncReturnsRequestIdJson) {
     std::remove(config.accessLogPath.c_str());
 }
 
+TEST(ExecutorStage2, SubmitSyncSelectReturnsBareJsonArray) {
+    executor::ExecutorService service(
+        [](const std::string&) { return std::string(R"([{"id":1,"name":"Ann"}])"); });
+
+    const std::string response =
+        service.submit("SELECT * FROM users;", "client-select");
+
+    EXPECT_EQ(response, R"([{"id":1,"name":"Ann"}])");
+    EXPECT_FALSE(contains(response, "\"mode\":\"sync\""));
+}
+
 TEST(ExecutorStage2, SubmitSyncReturnsImmediateResult) {
     executor::ExecutorConfig config;
     config.accessLogPath = "executor_stage2_sync.log";
