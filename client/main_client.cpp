@@ -29,8 +29,7 @@ void print_help(const std::string& name_of_prog)
     std::cout << "Usage:" << std::endl;
     std::cout << "Interactive mode: " << name_of_prog << " <port_number>" << std::endl;
     std::cout << "Script mode: " << name_of_prog << " <port_number> <script>.txt" << std::endl;
-    std::cout << "Server responses are JSON. Async DDL/DML are awaited automatically.\n"
-              << "Manual polling (optional): GET STATUS <request_id>; GET RESULT <request_id>;\n";
+    std::cout << "Server responses are JSON. Async DDL/DML are awaited automatically." << std::endl;
 }
 
 std::string readQuery() {

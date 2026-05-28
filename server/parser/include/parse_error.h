@@ -11,4 +11,4 @@ private:
     std::string msg_;
 };
 
-#endif
+#endif //PARSE_ERROR_H

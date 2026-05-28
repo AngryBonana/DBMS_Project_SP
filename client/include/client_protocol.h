@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CLIENT_PROTOCOL_H
+#define CLIENT_PROTOCOL_H
 
 #include "client_socket.h"
 
@@ -35,11 +36,11 @@ inline bool isResultReady(const std::string& response) {
     return contains(response, "\"ready\":true");
 }
 
-// Отправляет SQL; для async-ответа опрашивает GET RESULT до ready.
 inline std::string sendAndWait(Client& client, const std::string& command,
-                               int maxPolls = 50,
-                               std::chrono::milliseconds pollInterval =
-                                   std::chrono::milliseconds(100)) {
+    int maxPolls = 50,
+    std::chrono::milliseconds pollInterval =
+    std::chrono::milliseconds(100))
+{
     std::string response = client.send(command);
     if (!isAsyncAccepted(response)) {
         return response;
@@ -62,4 +63,6 @@ inline std::string sendAndWait(Client& client, const std::string& command,
     return response;
 }
 
-} // namespace client_protocol
+}
+
+#endif //CLIENT_PROTOCOL_H

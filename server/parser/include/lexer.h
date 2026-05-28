@@ -70,7 +70,7 @@ private:
     Token readString();
     Token readOperator();
 
-    TokenType toKeyword(const std::string& word) const; // upper(word) -> TokenType или IDENTIFIER
+    TokenType toKeyword(const std::string& word) const;
 };
 
 #endif //LEXER_H

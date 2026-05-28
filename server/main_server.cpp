@@ -22,7 +22,7 @@ int main(int argc, char* argv[])
     if (argc < 2 || argc > 3)
     {
         print_help(argv[0]);
-        return argc < 2 ? 0 : 1;
+        return 0;
     }
 
     int port = 0;
