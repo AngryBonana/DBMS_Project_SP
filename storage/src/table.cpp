@@ -189,7 +189,7 @@ void Table::notify_indexes_erase(const Row& row) {
     }
 }
 
-// Вставка одной строки: проверяем типы, подставляем default/NULL и соблюдаем NOT NULL
+// Вставка одной строки: проверяем типы, подставляем default/NULL и соблюдаем NOT_NULL
 void Table::insert_row(const std::vector<std::optional<Value>>& values) {
     if (values.size() > schema_.column_count()) {
         throw std::invalid_argument("Table::insert_row: too many values");
@@ -209,7 +209,7 @@ void Table::insert_row(const std::vector<std::optional<Value>>& values) {
         if (col.default_value.has_value()) {
             row.values.push_back(*col.default_value);
         } else if (col.not_null) {
-            throw std::invalid_argument("Table::insert_row: missing NOT NULL value for column '" + col.name + "'");
+            throw std::invalid_argument("Table::insert_row: missing NOT_NULL value for column '" + col.name + "'");
         } else {
             row.values.push_back(Value::null());
         }

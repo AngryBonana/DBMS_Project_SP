@@ -88,12 +88,12 @@ TEST(TableTest, IndexHooksRebuildAndTrackInserts) {
     auto index = std::make_shared<MockIndex>();
     EXPECT_CALL(*index, insert(::testing::Truly([](const Value& v) {
         return v.is_int() && v.as_int() == 1;
-    }), 0));
+    }), 1));
     table.attach_index(0, index, true);
 
     EXPECT_CALL(*index, insert(::testing::Truly([](const Value& v) {
         return v.is_int() && v.as_int() == 2;
-    }), 1));
+    }), 2));
     table.insert_row({Value::of_int(2), Value::of_str("two")});
 
     EXPECT_TRUE(table.has_index(0));

@@ -60,6 +60,7 @@ std::string DbmsQueryEngine::execute(const std::string& query) {
     auto tokens = Lexer(source).tokenize();
     auto command = Parser(std::move(tokens)).parse();
 
+    // Разбор AST → вызов storage/index; ответ "OK" или JSON для SELECT.
     return std::visit(
         [this](const auto& cmd) -> std::string {
             using T = std::decay_t<decltype(cmd)>;

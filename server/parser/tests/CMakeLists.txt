@@ -20,7 +20,7 @@ target_link_libraries(parser_tests PRIVATE
 
 target_compile_features(parser_tests PRIVATE cxx_std_17)
 
-add_test(NAME ParserTests COMMAND parser_tests)
+add_test(NAME ParserTests COMMAND $<TARGET_FILE:parser_tests>)
 
 set_tests_properties(ParserTests PROPERTIES
     TIMEOUT 30

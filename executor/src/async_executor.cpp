@@ -75,6 +75,7 @@ RequestId AsyncExecutor::submit(const std::string& query,
         snapshot.submittedAt = submittedAt;
         snapshots_[id] = std::move(snapshot);
 
+        // Фоновый worker забирает задания из queue_ и обновляет snapshots_.
         queue_.push(Job{id, clientId, query});
     }
 

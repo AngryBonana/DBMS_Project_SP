@@ -48,7 +48,7 @@ TEST_F(ParserTest, CreateTableBasic) {
 }
 
 TEST_F(ParserTest, CreateTableWithModifiers) {
-    auto cmd = parse("CREATE TABLE products (id INT NOT NULL INDEXED, price INT NOT NULL)");
+    auto cmd = parse("CREATE TABLE products (id INT NOT_NULL INDEXED, price INT NOT_NULL)");
     
     ASSERT_TRUE(std::holds_alternative<CreateTableCmd>(cmd));
     auto& createCmd = std::get<CreateTableCmd>(cmd);
@@ -657,7 +657,7 @@ TEST_F(ParserTest, FullCycleOfCommands) {
     
     EXPECT_NO_THROW(parse("CREATE DATABASE testdb"));
     EXPECT_NO_THROW(parse("USE testdb"));
-    EXPECT_NO_THROW(parse("CREATE TABLE users (id INT NOT NULL INDEXED, name STR DEFAULT 'Unknown', age INT)"));
+    EXPECT_NO_THROW(parse("CREATE TABLE users (id INT NOT_NULL INDEXED, name STR DEFAULT 'Unknown', age INT)"));
     EXPECT_NO_THROW(parse("INSERT INTO users (name, age) VALUES ('Alice', 25)"));
     EXPECT_NO_THROW(parse("INSERT INTO users VALUES ('Bob', 30), ('Charlie', 35)"));
     EXPECT_NO_THROW(parse("SELECT * FROM users"));

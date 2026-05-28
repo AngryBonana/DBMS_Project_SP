@@ -19,6 +19,7 @@ ExecutorService::ExecutorService(QueryHandler handler, ExecutorConfig config)
 
 std::string ExecutorService::submit(const std::string& query,
                                     const std::string& clientId) {
+    // DDL/DML — в очередь с request_id; SELECT — сразу в потоке клиента.
     if (classifyExecutionMode(query) == ExecutionMode::Async) {
         const RequestId id = executor_->submit(query, clientId);
         return buildAsyncAcceptedResponse(id);

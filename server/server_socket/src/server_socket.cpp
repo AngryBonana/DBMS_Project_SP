@@ -1,5 +1,14 @@
 #include "../include/server_socket.h"
 
+#include "json_response.h"
+
+#include <vector>
+
+namespace {
+
+constexpr std::uint32_t kMaxRequestBodySize = 4 * 1024 * 1024;
+
+} // namespace
 
 Session::Session(tcp::socket socket, QueryHandler handler,
     Logger& logger, std::string clientId)
@@ -28,6 +37,11 @@ void Session::readRequest()
                 logger_.logDisconnect(clientId_);
                 return;
             }
+            if (bodySize_ == 0 || bodySize_ > kMaxRequestBodySize)
+            {
+                logger_.logDisconnect(clientId_);
+                return;
+            }
             body_.resize(bodySize_);
             readBody();
         }
@@ -49,37 +63,15 @@ void Session::readBody()
                 return;
             }
 
-            auto startTime = std::chrono::system_clock::now();
-
-            std::string handlerId = clientId_ + "_" +
-                std::to_string(startTime.time_since_epoch().count());
-
             std::string response;
-            int statusCode = 0;
-            std::string statusMsg  = "OK";
-
             try
             {
-                response = handler_(body_);
+                response = handler_(body_, clientId_);
             }
             catch (const std::exception& e)
             {
-                statusCode = 1;
-                statusMsg = e.what();
-                response = "ERROR: " + statusMsg;
+                response = executor::buildErrorResponse(e.what(), 1);
             }
-
-            auto endTime = std::chrono::system_clock::now();
-
-            logger_.logRequest({
-                clientId_,
-                handlerId,
-                body_,
-                startTime,
-                endTime,
-                statusCode,
-                statusMsg
-            });
 
             sendResponse(response);
         }
@@ -90,7 +82,7 @@ void Session::sendResponse(const std::string& response)
 {
     auto self = shared_from_this();
 
-    outSize_ = response.size();
+    outSize_ = static_cast<uint32_t>(response.size());
     outBody_ = response;
 
     std::vector<boost::asio::const_buffer> buffers = {
