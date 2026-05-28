@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 4.3.2 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.16)
 
 project(DBMS_Project_SP LANGUAGES CXX)
 
@@ -24,4 +24,5 @@ add_subdirectory(client)
 add_subdirectory(server)
 add_subdirectory(index)
 add_subdirectory(storage)
+add_subdirectory(executor)
 # add_subdirectory(common)
