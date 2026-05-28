@@ -1,5 +1,23 @@
 cmake_minimum_required(VERSION 3.16)
 
+# Сборка из storage/build (WSL и т.п.) — отдельный проект с GTest.
+# Из корня репозитория googletest уже подключён в корневом CMakeLists.txt.
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    project(storage LANGUAGES CXX)
+    set(CMAKE_CXX_STANDARD 17)
+    set(CMAKE_CXX_STANDARD_REQUIRED ON)
+    enable_testing()
+
+    include(FetchContent)
+    FetchContent_Declare(
+        googletest
+        URL https://github.com/google/googletest/archive/refs/tags/v1.17.0.zip
+    )
+    # Для FetchContent в WSL/Linux
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(googletest)
+endif()
+
 add_library(storage_core
     src/value.cpp
     src/string_pool.cpp
@@ -20,21 +38,14 @@ target_link_libraries(storage_core PUBLIC
 target_compile_features(storage_core PUBLIC cxx_std_17)
 
 add_executable(storage_tests
-    tests/main_test.cpp
-    tests/value_test.cpp
-    tests/string_pool_test.cpp
-    tests/schema_test.cpp
+    tests/core_test.cpp
     tests/table_test.cpp
-    tests/table_persist_test.cpp
-    tests/database_test.cpp
-    tests/dbms_integration_test.cpp
-    tests/index_hook_test.cpp
-    tests/robustness_test.cpp
-    tests/index_adapter_test.cpp
+    tests/integration_test.cpp
 )
 
 target_include_directories(storage_tests PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests
 )
 
 target_link_libraries(storage_tests PRIVATE
@@ -42,7 +53,6 @@ target_link_libraries(storage_tests PRIVATE
     GTest::gtest
     GTest::gtest_main
     GTest::gmock
-    GTest::gmock_main
 )
 
 target_compile_features(storage_tests PRIVATE cxx_std_17)
