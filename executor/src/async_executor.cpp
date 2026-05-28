@@ -17,6 +17,7 @@ RequestStatusInfo toStatusInfo(const RequestSnapshot& snapshot) {
         snapshot.submittedAt,
         snapshot.startedAt,
         snapshot.finishedAt,
+        std::nullopt,
     };
 }
 
@@ -93,11 +94,16 @@ std::optional<RequestSnapshot> AsyncExecutor::getSnapshot(
 
 std::optional<RequestStatusInfo> AsyncExecutor::getStatus(
     const RequestId& id) const {
-    const auto snapshot = getSnapshot(id);
-    if (!snapshot) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    const auto it = snapshots_.find(id);
+    if (it == snapshots_.end()) {
         return std::nullopt;
     }
-    return toStatusInfo(*snapshot);
+    auto info = toStatusInfo(it->second);
+    if (info.status == RequestStatus::Pending) {
+        info.queuePosition = getQueuePositionLocked(id);
+    }
+    return info;
 }
 
 std::optional<RequestResultInfo> AsyncExecutor::getResult(
@@ -235,6 +241,21 @@ void AsyncExecutor::pruneOldSnapshotsLocked() {
 
 std::string AsyncExecutor::allocateHandlerId() {
     return "handler-" + std::to_string(nextHandlerSeq_.fetch_add(1));
+}
+
+std::optional<std::size_t> AsyncExecutor::getQueuePositionLocked(
+    const RequestId& id) const {
+    // std::queue не итерируется напрямую, поэтому используем копию для оценки позиции.
+    std::queue<Job> localCopy = queue_;
+    std::size_t index = 0;
+    while (!localCopy.empty()) {
+        if (localCopy.front().id == id) {
+            return index;
+        }
+        localCopy.pop();
+        ++index;
+    }
+    return std::nullopt;
 }
 
 }  // namespace executor

@@ -11,4 +11,5 @@
 #include "executor_service.h"
 #include "json_response.h"
 #include "query_classifier.h"
+#include "request_api.h"
 #include "request_types.h"

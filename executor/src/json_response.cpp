@@ -72,6 +72,9 @@ std::string buildStatusResponse(const RequestStatusInfo& info) {
         << escapeJsonString(formatTimestamp(info.submittedAt)) << "\"";
     appendOptionalTimestamp(out, "started_at", info.startedAt);
     appendOptionalTimestamp(out, "finished_at", info.finishedAt);
+    if (info.queuePosition) {
+        out << ",\"queue_position\":" << *info.queuePosition;
+    }
     out << "}";
     return out.str();
 }

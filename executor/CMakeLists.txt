@@ -9,6 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_library(executor_lib STATIC
     src/request_types.cpp
     src/query_classifier.cpp
+    src/request_api.cpp
     src/json_response.cpp
     src/access_logger.cpp
     src/async_executor.cpp
@@ -26,6 +27,7 @@ if(TARGET GTest::gtest)
     add_executable(executor_tests
         tests/test_stage1.cpp
         tests/test_stage2.cpp
+        tests/test_stage3.cpp
     )
 
     target_link_libraries(executor_tests PRIVATE
@@ -53,6 +55,7 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND NOT TARGET GTest::gtest)
     add_executable(executor_tests
         tests/test_stage1.cpp
         tests/test_stage2.cpp
+        tests/test_stage3.cpp
     )
 
     target_link_libraries(executor_tests PRIVATE

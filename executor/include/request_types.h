@@ -9,6 +9,7 @@
 #pragma once
 
 #include <chrono>
+#include <cstddef>
 #include <optional>
 #include <string>
 
@@ -60,6 +61,8 @@ struct RequestStatusInfo {
     std::chrono::system_clock::time_point submittedAt{};
     std::optional<std::chrono::system_clock::time_point> startedAt;
     std::optional<std::chrono::system_clock::time_point> finishedAt;
+    /// Позиция в очереди для Pending (0 — следующий к выполнению).
+    std::optional<std::size_t> queuePosition;
 };
 
 /// Публичная информация о результате — API getResult.

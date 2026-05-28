@@ -63,6 +63,7 @@ private:
                         bool setStarted, bool setFinished);
     void pruneOldSnapshotsLocked();
     std::string allocateHandlerId();
+    std::optional<std::size_t> getQueuePositionLocked(const RequestId& id) const;
 
     QueryHandler handler_;
     AccessLogger* accessLogger_;

@@ -45,6 +45,16 @@ public:
     /// Результат запроса в формате JSON; если ещё не готов — ready=false.
     std::string getResultJson(const std::string& requestId) const;
 
+    /**
+     * Обработать входную команду клиента.
+     * Поддерживаемые служебные команды этапа 3:
+     *   - GET STATUS <guid>;
+     *   - GET RESULT <guid>;
+     * Любой другой текст считается SQL-запросом и идёт в submit().
+     */
+    std::string handleClientCommand(const std::string& command,
+                                    const std::string& clientId);
+
     /// Низкоуровневый доступ к исполнителю (для тестов и расширений).
     AsyncExecutor& executor() { return *executor_; }
     const AsyncExecutor& executor() const { return *executor_; }

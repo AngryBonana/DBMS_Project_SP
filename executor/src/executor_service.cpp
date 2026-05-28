@@ -6,6 +6,7 @@
 
 #include "json_response.h"
 #include "query_classifier.h"
+#include "request_api.h"
 
 namespace executor {
 
@@ -53,6 +54,21 @@ std::string ExecutorService::getResultJson(const std::string& requestId) const {
     }
 
     return buildResultResponse(*result);
+}
+
+std::string ExecutorService::handleClientCommand(const std::string& command,
+                                                 const std::string& clientId) {
+    const ApiCommand parsed = parseApiCommand(command);
+    switch (parsed.kind) {
+    case ApiCommandKind::GetStatus:
+        return getStatusJson(parsed.payload);
+    case ApiCommandKind::GetResult:
+        return getResultJson(parsed.payload);
+    case ApiCommandKind::SubmitQuery:
+        return submit(parsed.payload, clientId);
+    }
+    return buildErrorResponse("Unsupported command",
+                              static_cast<int>(ReturnCode::Error));
 }
 
 std::string ExecutorService::executeSync(const std::string& query,
