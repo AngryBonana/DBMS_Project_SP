@@ -4,6 +4,7 @@
 #include <gtest/gtest.h>
 #include <memory>
 
+#include "index/bstarplus_adapter.h"
 #include "storage/table.h"
 #include "test_helpers.hpp"
 
@@ -14,10 +15,10 @@ namespace {
 
 class MockIndex : public IIndex {
 public:
+    MOCK_METHOD(std::optional<RowId>, find, (const Value& key), (const, override));
+    MOCK_METHOD(std::vector<RowId>, range_search, (const Value& begin, const Value& end), (const, override));
     MOCK_METHOD(void, insert, (const Value& key, RowId row_id), (override));
-    MOCK_METHOD(void, erase, (const Value& key, RowId row_id), (override));
-    MOCK_METHOD(std::vector<RowId>, find, (const Value& key), (const, override));
-    MOCK_METHOD(void, clear, (), (override));
+    MOCK_METHOD(bool, erase, (const Value& key), (override));
 };
 
 } // namespace
@@ -100,13 +101,24 @@ TEST(TableTest, IndexHooksRebuildAndTrackInserts) {
     EXPECT_FALSE(table.has_index(0));
 }
 
-TEST(TableTest, RowIdsStayStableAfterErase) {
-    TableSchema schema({
-        {"id", DataType::Int, true, true, std::nullopt},
-        {"name", DataType::Str, false, false, std::nullopt}
-    });
+TEST(TableTest, BStarPlusAdapterIntRoundtrip) {
+    const auto path = std::filesystem::temp_directory_path() / "storage_index_adapter_test.idx";
+    std::filesystem::remove(path);
 
-    Table table(schema);
+    BStarPlusIndexAdapter adapter(path, db::IndexKeyKind::Int64);
+    adapter.insert(Value::of_int(10), 42);
+
+    ASSERT_TRUE(adapter.find(Value::of_int(10)).has_value());
+    EXPECT_EQ(*adapter.find(Value::of_int(10)), 42u);
+    EXPECT_EQ(adapter.range_search(Value::of_int(1), Value::of_int(20)).size(), 1u);
+    EXPECT_TRUE(adapter.erase(Value::of_int(10)));
+    EXPECT_FALSE(adapter.find(Value::of_int(10)).has_value());
+
+    std::filesystem::remove(path);
+}
+
+TEST(TableTest, RowIdsStayStableAfterErase) {
+    Table table(indexed_id_schema());
     const RowId first = table.insert(Row{{Value::of_int(1), Value::of_str("A")}});
     const RowId second = table.insert(Row{{Value::of_int(2), Value::of_str("B")}});
 
