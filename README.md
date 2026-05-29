@@ -70,6 +70,6 @@ CREATE TABLE users (id INT NOT_NULL INDEXED, name STRING NOT_NULL);
 
 ## Авторы
 Бахшалиев М.А.  
-Кукава И.Г.
-Мутагиров Т.Р.
+Кукава И.Г.  
+Мутагиров Т.Р.  
 Отмахов Н.А.
